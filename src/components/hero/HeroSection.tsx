@@ -5,49 +5,46 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import gsap from 'gsap';
 import LoadingExperience from './LoadingSpinner';
-import GlitchText from './GlitchText';
-import MagneticButton from './MagneticButton';
 import NoiseOverlay from './NoiseOverlay';
 
 // Dynamic imports
-const ParticleUniverse = dynamic(() => import('./ParticleUniverse'), { ssr: false });
-const GeometricScene = dynamic(() => import('./MemoryAnimation'), { ssr: false });
+const DigitalTunnel = dynamic(() => import('./DigitalTunnel'), { ssr: false });
 
-export default function HeroSection() {
-    const [isLoading, setIsLoading] = useState(true);
-    const [showContent, setShowContent] = useState(false);
-    const [nameRevealed, setNameRevealed] = useState(false);
-    const heroRef = useRef<HTMLDivElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
-    const subtitleRef = useRef<HTMLDivElement>(null);
-    const ctaRef = useRef<HTMLDivElement>(null);
-    const mouseRef = useRef({ x: 0, y: 0 });
+function HolographicText({ text }: { text: string }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const redRef = useRef<HTMLHeadingElement>(null);
+    const blueRef = useRef<HTMLHeadingElement>(null);
+    const whiteRef = useRef<HTMLHeadingElement>(null);
 
-    const handleLoadComplete = () => {
-        setIsLoading(false);
-        setShowContent(true);
-    };
-
-    // Mouse parallax effect
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            mouseRef.current = {
-                x: (e.clientX / window.innerWidth - 0.5) * 2,
-                y: (e.clientY / window.innerHeight - 0.5) * 2,
-            };
+        const container = containerRef.current;
+        if (!container) return;
 
-            // Apply parallax to layers
-            const layers = document.querySelectorAll('[data-parallax]');
-            layers.forEach((layer) => {
-                const speed = parseFloat(layer.getAttribute('data-parallax') || '0');
-                const x = mouseRef.current.x * speed * 30;
-                const y = mouseRef.current.y * speed * 30;
-                gsap.to(layer, {
-                    x,
-                    y,
-                    duration: 1,
-                    ease: 'power2.out',
-                });
+        const handleMouseMove = (e: MouseEvent) => {
+            const { clientX, clientY } = e;
+            const { innerWidth, innerHeight } = window;
+            const x = (clientX / innerWidth - 0.5) * 2; // -1 to 1
+            const y = (clientY / innerHeight - 0.5) * 2;
+
+            // Chromatic aberration shift
+            gsap.to(redRef.current, {
+                x: x * 10,
+                y: y * 5,
+                duration: 0.5,
+                ease: 'power2.out'
+            });
+            gsap.to(blueRef.current, {
+                x: -x * 10,
+                y: -y * 5,
+                duration: 0.5,
+                ease: 'power2.out'
+            });
+            // White core moves slightly less for depth
+            gsap.to(whiteRef.current, {
+                x: x * 3,
+                y: y * 1.5,
+                duration: 0.5,
+                ease: 'power2.out'
             });
         };
 
@@ -55,210 +52,150 @@ export default function HeroSection() {
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
-    // Content reveal animation
-    useEffect(() => {
-        if (!showContent || !contentRef.current) return;
+    return (
+        <div ref={containerRef} className="relative z-10 select-none mix-blend-screen">
+            <h1 ref={redRef} className="absolute inset-0 text-center text-red-500 opacity-80 blur-[1px]">
+                {text}
+            </h1>
+            <h1 ref={blueRef} className="absolute inset-0 text-center text-cyan-500 opacity-80 blur-[1px]">
+                {text}
+            </h1>
+            <h1 ref={whiteRef} className="relative z-10 text-center text-white mix-blend-screen">
+                {text}
+            </h1>
+        </div>
+    );
+}
 
-        const tl = gsap.timeline({ delay: 0.5 });
+function PortalButton() {
+    return (
+        <div className="relative group cursor-pointer">
+            {/* Outer Ring */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-blue-500/30 scale-75 group-hover:scale-100 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full border border-purple-500/30 scale-90 group-hover:scale-110 transition-transform duration-700 delay-75 ease-[cubic-bezier(0.23,1,0.32,1)]" />
 
-        // Reveal subtitle after name
-        tl.add(() => {
-            setTimeout(() => setNameRevealed(true), 100);
-        });
+            {/* Magical Glowing Core */}
+            <div className="relative w-32 h-32 rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+                <div className="absolute inset-0 bg-black rounded-full z-0" />
 
-        // Animate subtitle words
-        if (subtitleRef.current) {
-            const words = subtitleRef.current.querySelectorAll('.word');
-            tl.fromTo(
-                words,
-                { y: 50, opacity: 0, rotateX: -90 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    rotateX: 0,
-                    duration: 0.8,
-                    stagger: 0.1,
-                    ease: 'back.out(1.7)',
-                },
-                '+=0.8'
-            );
-        }
+                {/* Portal Swirl */}
+                <div className="absolute inset-0 opacity-40 group-hover:opacity-80 transition-opacity duration-500">
+                    <div className="w-full h-full bg-[radial-gradient(circle_at_center,rgba(59,130,246,1)_0%,transparent_70%)] animate-pulse" />
+                </div>
 
-        // Animate CTA buttons
-        if (ctaRef.current) {
-            tl.fromTo(
-                ctaRef.current.children,
-                { y: 30, opacity: 0, scale: 0.8 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.6,
-                    stagger: 0.2,
-                    ease: 'back.out(1.7)',
-                },
-                '-=0.4'
-            );
-        }
-    }, [showContent]);
+                {/* Text */}
+                <span className="relative z-10 text-xs font-bold tracking-[0.2em] text-blue-200 group-hover:text-white transition-colors duration-300">
+                    ENTER
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function TechStackDisplay() {
+    // Holographic ticker effect
+    return (
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 w-full max-w-2xl px-4 pointer-events-none">
+            <div className="text-[10px] sm:text-xs font-mono text-blue-400/50 tracking-[0.3em] uppercase mb-2">
+                System Capabilities
+            </div>
+
+            {/* Glass Container */}
+            <div className="w-full h-12 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg flex items-center justify-center overflow-hidden relative shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                {/* Scanline overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] opacity-20 pointer-events-none" />
+
+                {/* Moving ticker mask */}
+                <div className="w-full overflow-hidden whitespace-nowrap mask-gradient">
+                    <div className="inline-block animate-marquee">
+                        {[
+                            'REACT', 'NEXT.JS', 'THREE.JS', 'TYPESCRIPT', 'NODE.JS',
+                            'TAILWIND', 'FRAMER', 'MONGODB', 'POSTGRESQL', 'DOCKER',
+                            'REACT', 'NEXT.JS', 'THREE.JS', 'TYPESCRIPT', 'NODE.JS',
+                        ].map((tech, i) => (
+                            <span key={i} className="inline-block mx-6 text-sm font-bold tracking-wider text-blue-100/80">
+                                {tech}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <style jsx>{`
+                .animate-marquee {
+                    animation: marquee 20s linear infinite;
+                }
+                @keyframes marquee {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                }
+                .mask-gradient {
+                    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+                }
+            `}</style>
+        </div>
+    );
+}
+
+// Module-level variable to track if the loading experience has been shown in this session (page load)
+let hasShownLoading = false;
+
+export default function HeroSection() {
+    // If we've already shown it, start false. Otherwise start true.
+    const [isLoading, setIsLoading] = useState(!hasShownLoading);
+    const [showContent, setShowContent] = useState(hasShownLoading);
+
+    const handleLoadComplete = () => {
+        hasShownLoading = true;
+        setIsLoading(false);
+        setTimeout(() => setShowContent(true), 100);
+    };
 
     if (isLoading) {
         return <LoadingExperience onComplete={handleLoadComplete} />;
     }
 
     return (
-        <section
-            ref={heroRef}
-            className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0f1a]"
-        >
-            {/* Noise overlay for cinematic feel */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black text-white">
+            {/* 3D Background */}
+            <DigitalTunnel />
             <NoiseOverlay />
 
-            {/* Particle universe background */}
-            <ParticleUniverse />
+            {/* Vignette */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000000_120%)] pointer-events-none z-[5]" />
 
-            {/* 3D Scene layer */}
-            <div data-parallax="0.5" className="absolute inset-0 z-[1]">
-                <GeometricScene />
-            </div>
-
-            {/* Gradient overlays */}
-            <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[#0a0f1a] z-[2]" />
-            <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-[#0a0f1a] to-transparent z-[2]" />
-
-            {/* Animated glow orbs */}
+            {/* Content Container */}
             <div
-                data-parallax="1"
-                className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[150px]"
-            />
-            <div
-                data-parallax="-0.8"
-                className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[150px]"
-            />
-            <div
-                data-parallax="0.6"
-                className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-pink-500/10 rounded-full blur-[150px]"
-            />
-
-            {/* Main content */}
-            <div
-                ref={contentRef}
-                className={`relative z-10 text-center px-4 max-w-6xl mx-auto transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'
-                    }`}
+                className={`relative z-10 flex flex-col items-center justify-center gap-8 transition-all duration-1000 ${showContent ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-lg scale-95'}`}
             >
-                {/* Glitch name reveal */}
-                <div data-parallax="0.2" className="mb-8">
-                    <GlitchText
-                        text="RAVI KARMAKAR"
-                        delay={200}
-                        className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight bg-gradient-to-r from-blue-400 via-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent"
-                    />
+                {/* Holographic Text Block */}
+                <div className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter">
+                    <HolographicText text="RAVI KARMAKAR" />
                 </div>
 
-                {/* Subtitle with staggered words */}
-                <div
-                    ref={subtitleRef}
-                    data-parallax="0.3"
-                    className="flex flex-wrap justify-center items-center gap-4 mb-16 text-xl md:text-2xl lg:text-3xl"
-                    style={{ perspective: '1000px' }}
-                >
-                    <span className="word px-4 py-2 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full border border-blue-500/30 text-blue-300">
-                        1st Semester
-                    </span>
-                    <span className="word text-gray-500">•</span>
-                    <span className="word px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-500/30 text-purple-300">
-                        MCA Student
-                    </span>
-                    <span className="word text-gray-500">•</span>
-                    <span className="word px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-full border border-amber-500/30 text-amber-300">
-                        Operating Systems
-                    </span>
+                {/* Subtext */}
+                <div className="flex items-center gap-4 text-xs sm:text-sm font-mono text-blue-300/60 tracking-[0.5em] uppercase">
+                    <span>System</span>
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span>Online</span>
                 </div>
 
-                {/* CTA Buttons */}
-                <div ref={ctaRef} data-parallax="0.1" className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                    <Link href="/topics">
-                        <MagneticButton
-                            strength={0.4}
-                            className="group relative px-10 py-5 text-lg font-bold text-white overflow-hidden rounded-full"
-                        >
-                            {/* Button background */}
-                            <span className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 transition-transform duration-500 group-hover:scale-110" />
-
-                            {/* Animated border */}
-                            <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <span className="absolute inset-[-2px] rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-spin-slow" />
-                                <span className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600" />
-                            </span>
-
-                            {/* Glow effect */}
-                            <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-
-                            {/* Content */}
-                            <span className="relative z-10 flex items-center gap-3">
-                                <svg className="w-6 h-6 transition-transform group-hover:rotate-12 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                                Explore Topics
-                            </span>
-                        </MagneticButton>
-                    </Link>
-
+                {/* Interactive Portal Button */}
+                <div className="mt-4 mb-20">
                     <Link href="/presentation">
-                        <MagneticButton
-                            strength={0.4}
-                            className="group relative px-10 py-5 text-lg font-bold text-white overflow-hidden rounded-full border-2 border-purple-500/50 bg-white/5 backdrop-blur-sm hover:border-purple-400 transition-all duration-300"
-                        >
-                            {/* Hover fill */}
-                            <span className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                            {/* Glow */}
-                            <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-300 blur-xl bg-purple-500" />
-
-                            {/* Content */}
-                            <span className="relative z-10 flex items-center gap-3">
-                                <svg className="w-6 h-6 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Presentation Mode
-                            </span>
-                        </MagneticButton>
+                        <PortalButton />
                     </Link>
-                </div>
-
-                {/* Scroll indicator */}
-                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-60 hover:opacity-100 transition-opacity">
-                    <span className="text-xs text-gray-500 tracking-[0.3em] uppercase">Scroll</span>
-                    <div className="w-px h-16 bg-gradient-to-b from-gray-500 to-transparent relative overflow-hidden">
-                        <div className="absolute w-full h-4 bg-white animate-scroll-line" />
-                    </div>
                 </div>
             </div>
 
-            <style jsx>{`
-                @keyframes scroll-line {
-                    0% {
-                        top: -16px;
-                    }
-                    100% {
-                        top: 64px;
-                    }
-                }
-                .animate-scroll-line {
-                    animation: scroll-line 1.5s ease-in-out infinite;
-                }
-                .animate-spin-slow {
-                    animation: spin 3s linear infinite;
-                }
-                @keyframes spin {
-                    from {
-                        transform: rotate(0deg);
-                    }
-                    to {
-                        transform: rotate(360deg);
-                    }
-                }
-            `}</style>
+            {/* Tech Stack Ticker (replaces static decorations) */}
+            <TechStackDisplay />
+
+            {/* Corner Status */}
+            <div className="absolute bottom-8 right-8 text-xs font-mono text-white/20 text-right hidden sm:block">
+                SECURE CONNECTION<br />
+                ENCRYPTED_V2
+            </div>
         </section>
     );
 }
