@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { PerspectiveCamera, Float } from '@react-three/drei';
 import * as THREE from 'three';
@@ -96,8 +96,10 @@ function HyperStars() {
     const count = 400;
     const mesh = useRef<THREE.InstancedMesh>(null);
 
-    // Position + Color data
-    const [data, colorArray] = useMemo(() => {
+    // State for star data
+    const [starData, setStarData] = useState<{ positions: Float32Array; colors: Float32Array } | null>(null);
+
+    useEffect(() => {
         const posAndSpeed = new Float32Array(count * 4); // x, y, z, speed
         const cols = new Float32Array(count * 3);
 
@@ -112,14 +114,15 @@ function HyperStars() {
             cols[i * 3 + 1] = color.g;
             cols[i * 3 + 2] = color.b;
         }
-        return [posAndSpeed, cols];
+        setStarData({ positions: posAndSpeed, colors: cols });
     }, [count]);
 
     const dummy = useMemo(() => new THREE.Object3D(), []);
 
     useFrame((state) => {
-        if (!mesh.current) return;
+        if (!mesh.current || !starData) return;
         const time = state.clock.elapsedTime;
+        const data = starData.positions;
 
         for (let i = 0; i < count; i++) {
             const x = data[i * 4];
@@ -140,6 +143,11 @@ function HyperStars() {
         }
         mesh.current.instanceMatrix.needsUpdate = true;
     });
+
+    // Don't render until data is ready
+    if (!starData) return null;
+
+    const colorArray = starData.colors;
 
     return (
         <instancedMesh ref={mesh} args={[undefined, undefined, count]}>

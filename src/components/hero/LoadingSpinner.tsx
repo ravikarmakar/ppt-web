@@ -9,7 +9,19 @@ interface LoadingExperienceProps {
 
 export default function LoadingExperience({ onComplete }: LoadingExperienceProps) {
     const [phase, setPhase] = useState<'timeline' | 'epicReveal' | 'aiWorldEntry' | 'portal'>('timeline');
-    const [currentYear, setCurrentYear] = useState(2002);
+    // State for random particles to ensure hydration matches (replaces impure Math.random)
+    const [particles, setParticles] = useState<Array<{ left: string; top: string; delay: string; duration: string }>>([]);
+
+    useEffect(() => {
+        const newParticles = [...Array(50)].map(() => ({
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            delay: `${Math.random() * 5}s`,
+            duration: `${3 + Math.random() * 4}s`
+        }));
+        setParticles(newParticles);
+    }, []);
+
     const containerRef = useRef<HTMLDivElement>(null);
     const yearContainerRef = useRef<HTMLDivElement>(null);
     const aiWorldRef = useRef<HTMLDivElement>(null);
@@ -234,15 +246,15 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
         >
             {/* Animated background particles */}
             <div className="absolute inset-0 overflow-hidden">
-                {[...Array(50)].map((_, i) => (
+                {particles.map((p, i) => (
                     <div
                         key={i}
                         className="absolute w-1 h-1 bg-blue-500/30 rounded-full animate-float"
                         style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                            animationDelay: `${Math.random() * 5}s`,
-                            animationDuration: `${3 + Math.random() * 4}s`
+                            left: p.left,
+                            top: p.top,
+                            animationDelay: p.delay,
+                            animationDuration: p.duration
                         }}
                     />
                 ))}
