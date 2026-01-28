@@ -71,9 +71,12 @@ export default function GlitchText({ text, className = '', delay = 0, onComplete
                 duration: 0.05,
             });
 
+        const container = containerRef.current;
         return () => {
             glitchTimeline.kill();
-            gsap.set(containerRef.current, { skewX: 0, x: 0 });
+            if (container) {
+                gsap.set(container, { skewX: 0, x: 0 });
+            }
         };
     }, [isGlitching]);
 

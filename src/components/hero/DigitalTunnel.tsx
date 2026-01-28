@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera, Float } from '@react-three/drei';
+import { PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
 function TunnelMesh() {
@@ -97,9 +97,8 @@ function HyperStars() {
     const mesh = useRef<THREE.InstancedMesh>(null);
 
     // State for star data
-    const [starData, setStarData] = useState<{ positions: Float32Array; colors: Float32Array } | null>(null);
-
-    useEffect(() => {
+    // State for star data with initializer to fix lint purity/cascading render errors
+    const [starData] = useState(() => {
         const posAndSpeed = new Float32Array(count * 4); // x, y, z, speed
         const cols = new Float32Array(count * 3);
 
@@ -107,15 +106,15 @@ function HyperStars() {
             posAndSpeed[i * 4] = (Math.random() - 0.5) * 50;
             posAndSpeed[i * 4 + 1] = (Math.random() - 0.5) * 50;
             posAndSpeed[i * 4 + 2] = Math.random() * 100 - 50;
-            posAndSpeed[i * 4 + 3] = Math.random() * 0.8 + 0.2; // Higher speed
+            posAndSpeed[i * 4 + 3] = Math.random() * 0.8 + 0.2;
 
             const color = new THREE.Color().setHSL(Math.random(), 0.8, 0.6);
             cols[i * 3] = color.r;
             cols[i * 3 + 1] = color.g;
             cols[i * 3 + 2] = color.b;
         }
-        setStarData({ positions: posAndSpeed, colors: cols });
-    }, [count]);
+        return { positions: posAndSpeed, colors: cols };
+    });
 
     const dummy = useMemo(() => new THREE.Object3D(), []);
 

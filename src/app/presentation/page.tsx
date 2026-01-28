@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { getAllTopics, getTopicBySlug, type Topic } from '@/content/topics';
 import { Button } from '@/components/ui/button';
 import NoiseOverlay from '@/components/hero/NoiseOverlay';
@@ -15,20 +14,30 @@ function PresentationContent() {
     const searchParams = useSearchParams();
     const topicSlug = searchParams.get('topic');
 
-    const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+    const [selectedTopic, setSelectedTopic] = useState<Topic | null>(() => {
+        return topicSlug ? (getTopicBySlug(topicSlug) ?? null) : null;
+    });
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const topics = getAllTopics();
 
+    // Reset slide count if topic changes
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCurrentSlide(0);
+    }, [selectedTopic]);
+
+    // Keep state in sync if URL changes externally
     useEffect(() => {
         if (topicSlug) {
-            const topic = getTopicBySlug(topicSlug);
-            if (topic) {
+            const topic = getTopicBySlug(topicSlug) ?? null;
+            if (topic && topic.slug !== selectedTopic?.slug) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSelectedTopic(topic);
             }
         }
-    }, [topicSlug]);
+    }, [topicSlug, selectedTopic]);
 
     const toggleFullscreen = useCallback(() => {
         if (!document.fullscreenElement) {
@@ -114,7 +123,44 @@ function PresentationContent() {
 
                         {/* Grid */}
                         <div className="grid md:grid-cols-2 gap-8">
-                            {topics.map((topic, i) => (
+                            {/* Manual Card for Memory Management */}
+                            <Link href="/memory-management" className="group relative cursor-pointer">
+                                {/* Hover Glow */}
+                                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl opacity-20 group-hover:opacity-70 blur-md transition-opacity duration-500" />
+
+                                {/* Card Body */}
+                                <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-xl overflow-hidden transition-all duration-300 group-hover:border-white/30 group-hover:translate-y-[-2px]">
+                                    {/* Scanline Effect */}
+                                    <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] opacity-10 pointer-events-none" />
+
+                                    <div className="flex items-start gap-6">
+                                        <div className="text-4xl p-4 bg-white/5 rounded-lg border border-white/10 text-blue-400 group-hover:text-white group-hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all duration-300">
+                                            🧠
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold mb-2 text-white group-hover:text-cyan-300 transition-colors">
+                                                Memory Management (3D)
+                                            </h3>
+                                            <p className="text-gray-400 group-hover:text-gray-300 leading-relaxed mb-4">
+                                                An interactive 3D journey through Operating System Memory Management.
+                                            </p>
+                                            <div className="flex items-center gap-2 text-xs font-mono text-blue-400/80">
+                                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                                INTERACTIVE SCENE
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Corner Accents */}
+                                    <div className="absolute top-0 right-0 p-2 opacity-30">
+                                        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </Link>
+
+                            {topics.map((topic) => (
                                 <div
                                     key={topic.slug}
                                     onClick={() => setSelectedTopic(topic)}

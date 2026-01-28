@@ -23,6 +23,7 @@ export default function Navbar() {
 
     const navLinks = [
         { name: 'Home', href: '/' },
+        { name: 'Memory (3D)', href: '/memory-management' },
         { name: 'Presentation', href: '/presentation' },
         { name: 'Topics', href: '/topics' },
     ];

@@ -10,6 +10,13 @@ import NoiseOverlay from './NoiseOverlay';
 // Dynamic imports
 const DigitalTunnel = dynamic(() => import('./DigitalTunnel'), { ssr: false });
 
+// Declare global window property for type safety
+declare global {
+    interface Window {
+        __HAS_SHOWN_LOADING__?: boolean;
+    }
+}
+
 function HolographicText({ text }: { text: string }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const redRef = useRef<HTMLHeadingElement>(null);
@@ -137,16 +144,26 @@ function TechStackDisplay() {
     );
 }
 
-// Module-level variable to track if the loading experience has been shown in this session (page load)
-let hasShownLoading = false;
-
 export default function HeroSection() {
-    // If we've already shown it, start false. Otherwise start true.
-    const [isLoading, setIsLoading] = useState(!hasShownLoading);
-    const [showContent, setShowContent] = useState(hasShownLoading);
+    // If we've already shown it in this window session, skip it.
+    // We use a global variable to persist across internal route changes.
+    const [isLoading, setIsLoading] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return !window.__HAS_SHOWN_LOADING__;
+        }
+        return true;
+    });
+    const [showContent, setShowContent] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return !!window.__HAS_SHOWN_LOADING__;
+        }
+        return false;
+    });
 
     const handleLoadComplete = () => {
-        hasShownLoading = true;
+        if (typeof window !== 'undefined') {
+            window.__HAS_SHOWN_LOADING__ = true;
+        }
         setIsLoading(false);
         setTimeout(() => setShowContent(true), 100);
     };
@@ -182,7 +199,10 @@ export default function HeroSection() {
 
                 {/* Interactive Portal Button */}
                 <div className="mt-4 mb-20">
-                    <Link href="/presentation">
+                    <Link href="#modules" onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' });
+                    }}>
                         <PortalButton />
                     </Link>
                 </div>
@@ -195,6 +215,13 @@ export default function HeroSection() {
             <div className="absolute bottom-8 right-8 text-xs font-mono text-white/20 text-right hidden sm:block">
                 SECURE CONNECTION<br />
                 ENCRYPTED_V2
+            </div>
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce pointer-events-none">
+                <span className="text-[10px] font-mono text-blue-400/60 tracking-widest uppercase">Explore System</span>
+                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
             </div>
         </section>
     );

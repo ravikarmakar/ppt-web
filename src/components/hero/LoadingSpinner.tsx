@@ -9,18 +9,15 @@ interface LoadingExperienceProps {
 
 export default function LoadingExperience({ onComplete }: LoadingExperienceProps) {
     const [phase, setPhase] = useState<'timeline' | 'epicReveal' | 'aiWorldEntry' | 'portal'>('timeline');
-    // State for random particles to ensure hydration matches (replaces impure Math.random)
-    const [particles, setParticles] = useState<Array<{ left: string; top: string; delay: string; duration: string }>>([]);
-
-    useEffect(() => {
-        const newParticles = [...Array(50)].map(() => ({
+    // State for random particles with initializer to avoid hydration mismatch and purity errors
+    const [particles] = useState<Array<{ left: string; top: string; delay: string; duration: string }>>(() =>
+        [...Array(50)].map(() => ({
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
             delay: `${Math.random() * 5}s`,
             duration: `${3 + Math.random() * 4}s`
-        }));
-        setParticles(newParticles);
-    }, []);
+        }))
+    );
 
     const containerRef = useRef<HTMLDivElement>(null);
     const yearContainerRef = useRef<HTMLDivElement>(null);
