@@ -116,7 +116,7 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
             // Huge pulse with reduced glow (focus on text, not background)
             .to(yearContainerRef.current, {
                 scale: 1.8,
-                filter: 'drop-shadow(0 0 50px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 80px rgba(139, 92, 246, 0.4))',
+                filter: 'drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 50px rgba(139, 92, 246, 0.4))',
                 duration: 0.6,
                 ease: 'power2.out'
             })
@@ -179,7 +179,7 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
             .to({}, { duration: 0.8 })
             // Pulse glow
             .to(aiWorldRef.current, {
-                textShadow: '0 0 120px rgba(59, 130, 246, 1), 0 0 240px rgba(139, 92, 246, 0.8)',
+                textShadow: '0 0 60px rgba(59, 130, 246, 1), 0 0 100px rgba(139, 92, 246, 0.8)',
                 scale: 1.08,
                 duration: 0.6,
                 yoyo: true,
@@ -202,7 +202,7 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
 
         // Portal expands from center, revealing the website
         tl.to(aiWorldRef.current, {
-            scale: 25,
+            scale: 8, // Reduced from 25 to prevent extensive smooth-out lag
             opacity: 0,
             duration: 1.8,
             ease: 'power4.in'
@@ -277,8 +277,9 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         filter: currentYear === 2026
-                            ? 'drop-shadow(0 0 80px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 120px rgba(139, 92, 246, 0.4))'
-                            : 'drop-shadow(0 0 20px rgba(100, 116, 139, 0.3))',
+                            ? 'drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))'
+                            : 'drop-shadow(0 0 10px rgba(100, 116, 139, 0.3))',
+                        willChange: 'transform, filter',
                         transition: 'all 0.2s ease'
                     }}
                 >
@@ -307,7 +308,8 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        filter: 'drop-shadow(0 0 80px rgba(139, 92, 246, 0.8)) drop-shadow(0 0 120px rgba(59, 130, 246, 0.6))'
+                        filter: 'drop-shadow(0 0 50px rgba(139, 92, 246, 0.7))',
+                        willChange: 'transform, opacity'
                     }}
                 >
                     AI WORLD
@@ -315,7 +317,8 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
                 <span
                     className="text-5xl sm:text-7xl md:text-9xl lg:text-[12rem] font-bold tracking-wider text-white/90 leading-none block"
                     style={{
-                        filter: 'drop-shadow(0 0 60px rgba(255, 255, 255, 0.5))'
+                        filter: 'drop-shadow(0 0 30px rgba(255, 255, 255, 0.5))',
+                        willChange: 'transform, opacity'
                     }}
                 >
                     2026
@@ -328,7 +331,8 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
                 className="absolute w-4 h-4 rounded-full opacity-0"
                 style={{
                     background: 'radial-gradient(circle, #ffffff 0%, #3b82f6 30%, transparent 70%)',
-                    boxShadow: '0 0 100px 50px rgba(59, 130, 246, 0.5)'
+                    boxShadow: '0 0 60px 30px rgba(59, 130, 246, 0.4)',
+                    willChange: 'transform, opacity'
                 }}
             />
 
