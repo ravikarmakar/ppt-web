@@ -16,75 +16,23 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
     const portalRef = useRef<HTMLDivElement>(null);
     const yearElementsRef = useRef<HTMLDivElement[]>([]);
 
-    // Phase 1: Scrolling timeline - each year appears, scrolls, and disappears
+    const timelineRef = useRef<HTMLDivElement>(null);
+
+    // Phase 1: Scrolling timeline - vertical scroll from 2002 to 2026
     useEffect(() => {
-        if (phase !== 'timeline') return;
+        if (phase !== 'timeline' || !timelineRef.current) return;
 
-        const startYear = 2002;
-        const endYear = 2026;
-        const totalYears = endYear - startYear + 1;
-
-        // Duration for each year to scroll through
-        const durationPerYear = 0.18; // Slightly slower for better visibility
-        const totalDuration = totalYears * durationPerYear;
+        const timelineDuration = 3.5; // "mid fast" total duration
 
         const tl = gsap.timeline({
-            onComplete: () => {
-                setPhase('epicReveal');
-            }
+            onComplete: () => setPhase('epicReveal')
         });
 
-        // Animate each year sequentially
-        for (let year = startYear; year <= endYear; year++) {
-            const yearIndex = year - startYear;
-            const isLastYear = year === endYear;
-
-            tl.add(() => {
-                setCurrentYear(year);
-            }, yearIndex * durationPerYear);
-
-            // Each year: appears from bottom (200px), scrolls to center, disappears to top (-200px)
-            if (yearContainerRef.current) {
-                // First half: appear from bottom to center (ALWAYS visible)
-                tl.fromTo(yearContainerRef.current,
-                    {
-                        y: 200,
-                        opacity: 0,
-                        scale: 0.8,
-                        rotationX: 45
-                    },
-                    {
-                        y: 0, // Move to center
-                        opacity: 1, // Fully visible
-                        scale: isLastYear ? 1.1 : 1,
-                        rotationX: 0,
-                        duration: durationPerYear * 0.5, // First half
-                        ease: 'power2.out',
-                    },
-                    yearIndex * durationPerYear
-                );
-
-                // Second half: continue to top (except for 2026)
-                if (!isLastYear) {
-                    tl.to(yearContainerRef.current, {
-                        y: -200,
-                        opacity: 0,
-                        scale: 0.8,
-                        rotationX: -45,
-                        duration: durationPerYear * 0.5,
-                        ease: 'power2.in',
-                    }, yearIndex * durationPerYear + durationPerYear * 0.5);
-                }
-
-                // Add subtle glow for milestone years only (not 2026 to reduce background glow)
-                if (year % 5 === 0 && year !== endYear) {
-                    tl.to(yearContainerRef.current, {
-                        filter: `drop-shadow(0 0 25px rgba(59, 130, 246, 0.25))`,
-                        duration: durationPerYear * 0.3,
-                    }, yearIndex * durationPerYear);
-                }
-            }
-        }
+        tl.to(timelineRef.current, {
+            y: "-96%", // Scroll so 2026 is centered
+            duration: timelineDuration,
+            ease: "power2.inOut"
+        });
 
         return () => {
             tl.kill();
@@ -95,16 +43,22 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
     useEffect(() => {
         if (phase !== 'epicReveal' || !yearContainerRef.current) return;
 
+        // Ensure we reset any potential transforms from previous phases if we reused the ref
+        // But we are swapping components, so it should be fresh.
+
         const tl = gsap.timeline({
             onComplete: () => setPhase('aiWorldEntry')
         });
 
-        // 2026 is now centered - create epic reveal effect
-        tl.to(yearContainerRef.current, {
-            scale: 1.5,
-            duration: 0.4,
-            ease: 'power2.out'
-        })
+        // 2026 is now centered (static component mounted)
+        tl.fromTo(yearContainerRef.current,
+            { scale: 1, opacity: 1 },
+            {
+                scale: 1.5,
+                duration: 0.4,
+                ease: 'power2.out'
+            }
+        )
             // Elastic bounce
             .to(yearContainerRef.current, {
                 scale: 1,
@@ -113,7 +67,7 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
             })
             // Pause for impact
             .to({}, { duration: 0.3 })
-            // Huge pulse with reduced glow (focus on text, not background)
+            // Huge pulse with reduced glow
             .to(yearContainerRef.current, {
                 scale: 1.8,
                 filter: 'drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 50px rgba(139, 92, 246, 0.4))',
@@ -258,34 +212,68 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
             />
 
             {/* Year display - scrolls through 2002 → 2026 */}
-            <div
-                ref={yearContainerRef}
-                className={`absolute transition-all duration-300 ${phase === 'aiWorldEntry' || phase === 'portal' ? 'pointer-events-none' : ''}`}
-                style={{
-                    opacity: phase === 'aiWorldEntry' || phase === 'portal' ? 0 : 1,
-                    perspective: '1000px',
-                    transformStyle: 'preserve-3d'
-                }}
-            >
-                <span
-                    className="text-[18rem] sm:text-[24rem] md:text-[28rem] lg:text-[32rem] font-black tracking-tighter leading-none block"
+            {phase === 'timeline' ? (
+                <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+                    <div
+                        ref={timelineRef}
+                        className="flex flex-col items-center"
+                        style={{ transform: 'translateY(48%)' }}
+                    >
+                        {Array.from({ length: 25 }, (_, i) => 2002 + i).map((year) => (
+                            <span
+                                key={year}
+                                className="text-[18rem] sm:text-[24rem] md:text-[28rem] lg:text-[32rem] font-black tracking-tighter leading-none block flex-shrink-0"
+                                style={{
+                                    backgroundImage: year === 2026
+                                        ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)'
+                                        : 'linear-gradient(135deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%)',
+                                    backgroundClip: 'text',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    filter: year === 2026
+                                        ? 'drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))'
+                                        : 'drop-shadow(0 0 10px rgba(100, 116, 139, 0.3))',
+                                    height: '1.2em', // Fixed height helps exact alignment
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                {year}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <div
+                    ref={yearContainerRef}
+                    className={`absolute transition-all duration-300 ${phase === 'aiWorldEntry' || phase === 'portal' ? 'pointer-events-none' : ''}`}
                     style={{
-                        backgroundImage: currentYear === 2026
-                            ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)'
-                            : 'linear-gradient(135deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%)',
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        filter: currentYear === 2026
-                            ? 'drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))'
-                            : 'drop-shadow(0 0 10px rgba(100, 116, 139, 0.3))',
-                        willChange: 'transform, filter',
-                        transition: 'all 0.2s ease'
+                        opacity: phase === 'aiWorldEntry' || phase === 'portal' ? 0 : 1,
+                        perspective: '1000px',
+                        transformStyle: 'preserve-3d'
                     }}
                 >
-                    {currentYear}
-                </span>
-            </div>
+                    <span
+                        className="text-[18rem] sm:text-[24rem] md:text-[28rem] lg:text-[32rem] font-black tracking-tighter leading-none block"
+                        style={{
+                            backgroundImage: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            filter: 'drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))',
+                            willChange: 'transform, filter',
+                            transition: 'all 0.2s ease',
+                            height: '1.2em',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        2026
+                    </span>
+                </div>
+            )}
 
             {/* AI WORLD 2026 reveal */}
             <div
