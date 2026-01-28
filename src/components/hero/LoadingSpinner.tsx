@@ -14,7 +14,7 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
     const yearContainerRef = useRef<HTMLDivElement>(null);
     const aiWorldRef = useRef<HTMLDivElement>(null);
     const portalRef = useRef<HTMLDivElement>(null);
-    const yearElementsRef = useRef<HTMLDivElement[]>([]);
+    const yearElementsRef = useRef<(HTMLDivElement | HTMLSpanElement)[]>([]);
 
     const timelineRef = useRef<HTMLDivElement>(null);
 
@@ -22,17 +22,63 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
     useEffect(() => {
         if (phase !== 'timeline' || !timelineRef.current) return;
 
-        const timelineDuration = 3.5; // "mid fast" total duration
+        const timelineDuration = 4.0;
+
+        // Ensure we start with a clean state for the wheel elements
+        const updateWheel = () => {
+            if (!yearElementsRef.current.length) return;
+            const center = window.innerHeight / 2;
+            const height = window.innerHeight;
+
+            yearElementsRef.current.forEach((el, index) => {
+                if (!el) return;
+                const rect = el.getBoundingClientRect();
+                const elCenter = rect.top + rect.height / 2;
+                const dist = Math.abs(center - elCenter);
+
+                // Normalized distance logic (0 at center, 1 at edges)
+                const maxDist = height / 2;
+                let progress = dist / maxDist;
+                progress = Math.min(Math.max(progress, 0), 1);
+
+                const scale = 1 - (progress * 0.5); // 1.0 at center, 0.5 at edges
+                const opacity = 1 - (progress * 0.7); // 1.0 at center, 0.3 at edges
+                const blur = progress * 8; // 0px at center, 8px at edges
+
+                // Handle drop shadow for 2026 (last element)
+                const year = 2002 + index;
+                const isTarget = year === 2026;
+                const baseShadow = isTarget
+                    ? 'drop-shadow(0 0 40px rgba(59, 130, 246, 0.8))'
+                    : 'drop-shadow(0 0 10px rgba(100, 116, 139, 0.3))';
+
+                gsap.set(el, {
+                    scale: scale,
+                    opacity: opacity,
+                    filter: `blur(${blur}px) ${baseShadow}`,
+                    zIndex: isTarget ? 10 : 1
+                });
+            });
+        };
 
         const tl = gsap.timeline({
-            onComplete: () => setPhase('epicReveal')
+            onComplete: () => setPhase('epicReveal'),
+            onUpdate: updateWheel
         });
 
-        tl.to(timelineRef.current, {
-            y: "-96%", // Scroll so 2026 is centered
-            duration: timelineDuration,
-            ease: "power2.inOut"
-        });
+        // Start from below center (2002 centered) and scroll to above center (2026 centered)
+        // 25 items -> distance between first and last is 24 units.
+        // If height is 100%, each unit is 1/25 = 4%.
+        // 24 * 4% = 96%.
+        // We move from +48% (2002 centered) to -48% (2026 centered).
+        tl.fromTo(timelineRef.current,
+            { y: "48%" },
+            {
+                y: "-48%",
+                duration: timelineDuration,
+                ease: "power2.inOut"
+            }
+        );
 
         return () => {
             tl.kill();
@@ -217,11 +263,14 @@ export default function LoadingExperience({ onComplete }: LoadingExperienceProps
                     <div
                         ref={timelineRef}
                         className="flex flex-col items-center"
-                        style={{ transform: 'translateY(48%)' }}
+                    // Transform is handled by GSAP
                     >
-                        {Array.from({ length: 25 }, (_, i) => 2002 + i).map((year) => (
+                        {Array.from({ length: 25 }, (_, i) => 2002 + i).map((year, i) => (
                             <span
                                 key={year}
+                                ref={(el) => {
+                                    if (el) yearElementsRef.current[i] = el;
+                                }}
                                 className="text-[18rem] sm:text-[24rem] md:text-[28rem] lg:text-[32rem] font-black tracking-tighter leading-none block flex-shrink-0"
                                 style={{
                                     backgroundImage: year === 2026
